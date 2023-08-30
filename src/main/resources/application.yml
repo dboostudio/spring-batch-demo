@@ -1,5 +1,5 @@
 
-spring.batch.job.name: ${JOB_NAME:decider}
+spring.batch.job.name: ${JOB_NAME:scope}
 
 spring:
   datasource:

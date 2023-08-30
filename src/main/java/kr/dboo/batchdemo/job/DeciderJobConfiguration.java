@@ -3,6 +3,7 @@ package kr.dboo.batchdemo.job;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.*;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.flow.FlowExecutionStatus;
 import org.springframework.batch.core.job.flow.JobExecutionDecider;
@@ -40,6 +41,7 @@ public class DeciderJobConfiguration {
     }
 
     @Bean
+    @JobScope
     public Step startStep() {
         return new StepBuilder("startStep", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
@@ -49,6 +51,7 @@ public class DeciderJobConfiguration {
     }
 
     @Bean
+    @JobScope
     public Step evenStep() {
         return new StepBuilder("evenStep", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
@@ -58,6 +61,7 @@ public class DeciderJobConfiguration {
     }
 
     @Bean
+    @JobScope
     public Step oddStep() {
         return new StepBuilder("oddStep", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
@@ -67,6 +71,7 @@ public class DeciderJobConfiguration {
     }
 
     @Bean
+    @JobScope
     public JobExecutionDecider decider() {
         return new OddDecider();
     }

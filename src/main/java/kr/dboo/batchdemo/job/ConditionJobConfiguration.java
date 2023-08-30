@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -42,6 +43,7 @@ public class ConditionJobConfiguration {
 
 
     @Bean
+    @JobScope
     public Step startConditionStep() {
         return new StepBuilder("startStep", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
@@ -59,6 +61,7 @@ public class ConditionJobConfiguration {
     }
 
     @Bean
+    @JobScope
     public Step conditionStep1() {
         return new StepBuilder("conditionStep1", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
@@ -68,6 +71,7 @@ public class ConditionJobConfiguration {
     }
 
     @Bean
+    @JobScope
     public Step conditionStep2() {
         return new StepBuilder("conditionStep2", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {

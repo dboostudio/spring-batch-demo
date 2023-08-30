@@ -32,7 +32,10 @@ public class ParamJobConfiguration {
 
     @Bean
     @JobScope
-    public Step paramStep(@Value("#{jobParameters[requestDate]}") String requestDate) {
+    public Step paramStep(
+            // SpEL
+            @Value("#{jobParameters[requestDate]}") String requestDate
+    ) {
         return new StepBuilder("parameterStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     log.info(">>>>> This is a parameter step");

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -28,6 +29,7 @@ public class SimpleJobConfiguration {
 
 
     @Bean
+    @JobScope
     public Step finishedStep() {
         return new StepBuilder("FINISH_STEP", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
@@ -37,6 +39,7 @@ public class SimpleJobConfiguration {
     }
 
     @Bean
+    @JobScope
     public Step continuableStep() {
         return new StepBuilder("COUNTINUABLE_STEP", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
