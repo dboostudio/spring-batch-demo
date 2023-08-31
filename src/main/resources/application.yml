@@ -1,5 +1,5 @@
 
-spring.batch.job.name: ${JOB_NAME:scope}
+spring.batch.job.name: ${JOB_NAME:jdbcCursor}
 
 spring:
   datasource:
