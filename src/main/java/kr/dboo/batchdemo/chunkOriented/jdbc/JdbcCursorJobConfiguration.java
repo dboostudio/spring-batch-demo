@@ -1,6 +1,7 @@
 package kr.dboo.batchdemo.chunkOriented.jdbc;
 
 import kr.dboo.batchdemo.chunkOriented.entity.Pay;
+import kr.dboo.batchdemo.chunkOriented.entity.Pay2;
 import kr.dboo.batchdemo.chunkOriented.entity.PayRowMapper;
 import kr.dboo.batchdemo.chunkOriented.repository.PayRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,10 +13,13 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
+import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
 import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -72,23 +76,26 @@ public class JdbcCursorJobConfiguration {
         return new StepBuilder("jdbcCursorReadStep", jobRepository)
                 .<Pay, Pay>chunk(chunkSize, transactionManager)
                 .reader(jdbcCursorItemReader())
-                .writer(jdbcCursorItemWriter())
+                .writer(jdbcBatchItemWriter())
                 .build();
     }
 
+    @Bean
     private JdbcCursorItemReader<Pay> jdbcCursorItemReader(){
         return new JdbcCursorItemReaderBuilder<Pay>()
                 .sql("select * from pay")
                 .name("payReader")
+                .fetchSize(chunkSize)
 //                .rowMapper(rowMapper)
-//                .rowMapper(new BeanPropertyRowMapper<>(Pay.class))
+                .rowMapper(new BeanPropertyRowMapper<>(Pay.class))
 //                .beanRowMapper(new BeanPropertyRowMapper<>(Pay.class).getMappedClass())
-                .beanRowMapper(Pay.class)
+//                .beanRowMapper(Pay.class)
                 // beanRowMapper는 매핑할 클래스의 setter를 사용하므로, setter를 만들고 싶지 않으면 직접 rowMapper에 생성자로 매핑해준다.
                 .dataSource(dataSource)
                 .build();
     }
 
+    @Bean
     private ItemWriter<Pay> jdbcCursorItemWriter() {
         return list -> {
             log.info("---chunk---");
@@ -96,5 +103,14 @@ public class JdbcCursorJobConfiguration {
                 log.info("Current Pay={}", pay);
             }
         };
+    }
+
+    @Bean
+    public JdbcBatchItemWriter<Pay> jdbcBatchItemWriter() {
+        return new JdbcBatchItemWriterBuilder<Pay>()
+                .dataSource(dataSource)
+                .sql("insert into pay2(amount, tx_name, tx_date_time) values (:amount, :txName, :txDateTime)")
+                .beanMapped()
+                .build();
     }
 }

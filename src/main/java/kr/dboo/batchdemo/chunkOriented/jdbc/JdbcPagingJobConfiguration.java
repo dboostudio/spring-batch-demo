@@ -81,6 +81,7 @@ public class JdbcPagingJobConfiguration {
                 .build();
     }
 
+    @Bean
     private JdbcPagingItemReader<Pay> jdbcPagingItemReader() throws Exception {
         Map<String, Object> parameterValues = new HashMap<>();
         parameterValues.put("amount", 2000);
