@@ -45,3 +45,4 @@ tasklet = reader + processor + writer
   - HibernatePagingItemReader
   - JpaPagingItemReader
 
+- Hibernate는 cursor기반 database접근이 가능, JPA는 Cursor기반의 Database접근을 지원하지 않는다.

@@ -1,5 +1,6 @@
-package kr.dboo.batchdemo.chunkOriented.jdbcCursor;
+package kr.dboo.batchdemo.chunkOriented.jpa;
 
+import jakarta.persistence.EntityManagerFactory;
 import kr.dboo.batchdemo.chunkOriented.entity.Pay;
 import kr.dboo.batchdemo.chunkOriented.repository.PayRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,40 +11,40 @@ import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
+import org.springframework.batch.item.database.JpaPagingItemReader;
+import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.sql.DataSource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
-@Component
-public class PayJobConfiguration {
+@Configuration
+public class JpaPagingJobConfiguration {
 
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
+    private final EntityManagerFactory entityManagerFactory;
     private final PayRepository payRepository;
-    private final DataSource dataSource;
-    private final PayRowMapper rowMapper;
+    private static final int chunkSize = 10;
 
     @Bean
-    public Job jdbcCursorItemReaderJob(){
-        return new JobBuilder("jdbcCursor", jobRepository)
-                .start(initPays())
-                .next(jdbcCursorItemReaderStep())
+    public Job jpaPagingJob(){
+        return new JobBuilder("jpaPaging", jobRepository)
+                .start(initJpaPay())
+                .next(jpaPagingStep())
                 .build();
     }
 
     @Bean
-    private Step initPays(){
+    @JobScope
+    public Step initJpaPay(){
         return new StepBuilder("initPays", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     payRepository.deleteAll();
@@ -62,32 +63,31 @@ public class PayJobConfiguration {
                 .build();
     }
 
-    @JobScope
     @Bean
-    private Step jdbcCursorItemReaderStep() {
-        return new StepBuilder("jdbcCursorReadStep", jobRepository)
-                .<Pay, Pay>chunk(10, transactionManager)
-                .reader(jdbcCursorItemReader())
-                .writer(jdbcCursorItemWriter())
+    @JobScope
+    public Step jpaPagingStep(){
+        return new StepBuilder("jpaPagingStep", jobRepository)
+                .<Pay, Pay>chunk(chunkSize, transactionManager)
+                .reader(jpaPagingItemReader())
+                .writer(jpaPagingItemWriter())
                 .build();
     }
 
-    private ItemReader<Pay> jdbcCursorItemReader(){
-        return new JdbcCursorItemReaderBuilder<Pay>()
-                .sql("select * from pay")
-                .name("payReader")
-                .rowMapper(rowMapper)
-//                .beanRowMapper(new BeanPropertyRowMapper<>(Pay.class).getMappedClass())
-                .dataSource(dataSource)
+    public JpaPagingItemReader<Pay> jpaPagingItemReader(){
+        return new JpaPagingItemReaderBuilder<Pay>()
+                .name("jpaPagingItemReader")
+                .entityManagerFactory(entityManagerFactory)
+                .pageSize(chunkSize)
+                .queryString("SELECT p FROM Pay p WHERE amount >= 2000")
                 .build();
     }
 
-    private ItemWriter<Pay> jdbcCursorItemWriter() {
+    private ItemWriter<Pay> jpaPagingItemWriter() {
         return list -> {
-            log.info("---chunk---");
             for (Pay pay: list) {
                 log.info("Current Pay={}", pay);
             }
         };
     }
+
 }

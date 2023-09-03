@@ -1,5 +1,5 @@
 
-spring.batch.job.name: ${JOB_NAME:jdbcCursor}
+spring.batch.job.name: ${JOB_NAME:jpaPaging}
 
 spring:
   datasource:
@@ -9,7 +9,7 @@ spring:
     url: jdbc:postgresql://localhost:5432/batch-demo
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true

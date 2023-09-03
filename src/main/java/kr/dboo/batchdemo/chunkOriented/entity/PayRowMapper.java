@@ -1,6 +1,5 @@
-package kr.dboo.batchdemo.chunkOriented.jdbcCursor;
+package kr.dboo.batchdemo.chunkOriented.entity;
 
-import kr.dboo.batchdemo.chunkOriented.entity.Pay;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
