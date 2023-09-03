@@ -52,7 +52,7 @@ public class JdbcPagingJobConfiguration {
 
     @Bean
     @JobScope
-    private Step initPaysPaging(){
+    public Step initPaysPaging(){
         return new StepBuilder("initPays", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     payRepository.deleteAll();
@@ -73,7 +73,7 @@ public class JdbcPagingJobConfiguration {
 
     @JobScope
     @Bean
-    private Step jdbcPagingStep() throws Exception {
+    public Step jdbcPagingStep() throws Exception {
         return new StepBuilder("jdbcPagingStep", jobRepository)
                 .<Pay, Pay>chunk(10, transactionManager)
                 .reader(jdbcPagingItemReader())
@@ -82,7 +82,7 @@ public class JdbcPagingJobConfiguration {
     }
 
     @Bean
-    private JdbcPagingItemReader<Pay> jdbcPagingItemReader() throws Exception {
+    public JdbcPagingItemReader<Pay> jdbcPagingItemReader() throws Exception {
         Map<String, Object> parameterValues = new HashMap<>();
         parameterValues.put("amount", 2000);
 
@@ -98,7 +98,8 @@ public class JdbcPagingJobConfiguration {
                 .build();
     }
 
-    private ItemWriter<Pay> jdbcPagingItemWriter() {
+    @Bean
+    public ItemWriter<Pay> jdbcPagingItemWriter() {
         return list -> {
             log.info("---chunk---");
             for (Pay pay: list) {

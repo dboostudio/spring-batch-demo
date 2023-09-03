@@ -2,6 +2,7 @@ package kr.dboo.batchdemo.chunkOriented.jpa;
 
 import jakarta.persistence.EntityManagerFactory;
 import kr.dboo.batchdemo.chunkOriented.entity.Pay;
+import kr.dboo.batchdemo.chunkOriented.entity.Pay2;
 import kr.dboo.batchdemo.chunkOriented.repository.PayRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,9 @@ import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -59,7 +62,7 @@ public class JpaPagingJobConfiguration {
 
                     payRepository.saveAll(payList);
 
-                    return RepeatStatus.FINISHED;}, transactionManager)
+                    return RepeatStatus.FINISHED; }, transactionManager)
                 .build();
     }
 
@@ -67,27 +70,42 @@ public class JpaPagingJobConfiguration {
     @JobScope
     public Step jpaPagingStep(){
         return new StepBuilder("jpaPagingStep", jobRepository)
-                .<Pay, Pay>chunk(chunkSize, transactionManager)
+                .<Pay, Pay2>chunk(chunkSize, transactionManager)
                 .reader(jpaPagingItemReader())
-                .writer(jpaPagingItemWriter())
+                .processor(jpaItemProcessor())
+                .writer(jpaItemWriter())
                 .build();
     }
 
+    @Bean
     public JpaPagingItemReader<Pay> jpaPagingItemReader(){
         return new JpaPagingItemReaderBuilder<Pay>()
                 .name("jpaPagingItemReader")
                 .entityManagerFactory(entityManagerFactory)
                 .pageSize(chunkSize)
-                .queryString("SELECT p FROM Pay p WHERE amount >= 2000")
+                .queryString("SELECT p FROM Pay p WHERE amount >= 30000")
                 .build();
     }
 
-    private ItemWriter<Pay> jpaPagingItemWriter() {
+    @Bean
+    ItemWriter<Pay> jpaPagingItemWriter() {
         return list -> {
             for (Pay pay: list) {
                 log.info("Current Pay={}", pay);
             }
         };
+    }
+
+    @Bean
+    public ItemProcessor<Pay, Pay2> jpaItemProcessor() {
+        return pay -> new Pay2(pay.getAmount(), pay.getTxName(), pay.getTxDateTime());
+    }
+
+    @Bean
+    public JpaItemWriter<Pay2> jpaItemWriter() {
+        JpaItemWriter<Pay2> jpaItemWriter = new JpaItemWriter<>();
+        jpaItemWriter.setEntityManagerFactory(entityManagerFactory);
+        return jpaItemWriter;
     }
 
 }
