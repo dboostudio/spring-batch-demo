@@ -37,7 +37,8 @@ public class JpaPagingJobConfiguration {
     private final PlatformTransactionManager transactionManager;
     private final EntityManagerFactory entityManagerFactory;
     private final PayRepository payRepository;
-    private static final int chunkSize = 10;
+    private static final int chunkSize = 20;
+    private static final int pageSize = 5;
 
     @Bean(JOB_NAME + "_job")
     public Job jpaPagingJob(){
@@ -84,13 +85,13 @@ public class JpaPagingJobConfiguration {
         return new JpaPagingItemReaderBuilder<Pay>()
                 .name("jpaPagingItemReader")
                 .entityManagerFactory(entityManagerFactory)
-                .pageSize(chunkSize)
+                .pageSize(pageSize)
                 .queryString("SELECT p FROM Pay p WHERE amount >= 30000")
                 .build();
     }
 
-    @Bean(JOB_NAME + "_writer_simple")
-    ItemWriter<Pay> simpleWriter() {
+    @Bean(JOB_NAME + "_printer")
+    ItemWriter<Pay> printer() {
         return list -> {
             for (Pay pay: list) {
                 log.info("Current Pay={}", pay);

@@ -46,8 +46,15 @@ tasklet = reader + processor + writer
   - JpaPagingItemReader
 
 - Hibernate는 cursor기반 database접근이 가능, JPA는 Cursor기반의 Database접근을 지원하지 않는다.
+  - 5.0에서는 JpaCursorItemReader가 지원되는 것인지, 현재는 가능하다.
 
 ### IterWriter
 
 - ItemWriter는 Reader와 다르게 chunk단위로 묶인 Item List를 다룬다.
 - query를 chunksize만큼 쌓아서 한번에 update한다.
+
+### ItemProcessor
+
+- 필수요소가 아님
+- Reader에서 읽은 Item을 Write하기전에 비즈니스 로직 처리를 하기위한 용도로 사용됨
+- 특정 조건에서 Writer에게 null을 리턴하면, 필터의 역할을 할 수 있다.
