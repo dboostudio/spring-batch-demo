@@ -55,7 +55,7 @@ public class JdbcPagingJobConfiguration {
     @Bean(JOB_NAME + "_init_step")
     @JobScope
     public Step init(){
-        return new StepBuilder("initPays", jobRepository)
+        return new StepBuilder(JOB_NAME + "_init", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     payRepository.deleteAll();
 

@@ -1,6 +1,5 @@
 package kr.dboo.batchdemo.chunkOriented.queryDsl;
 
-import kr.dboo.batchdemo.chunkOriented.entity.Pay;
 import kr.dboo.batchdemo.chunkOriented.entity.Student;
 import kr.dboo.batchdemo.chunkOriented.entity.Teacher;
 import kr.dboo.batchdemo.chunkOriented.queryDsl.supplier.QuerydslSupplierPagingItemReader;
@@ -22,15 +21,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
 @Configuration
-public class QuerydslSupplierJobConfiguration {
-    public static final String JOB_NAME = "querydslJob";
+public class InsertJobConfiguration {
+    public static final String JOB_NAME = "querydslInsert";
 
     private final QuerydslSupplierRepository querydslSupplierRepository;
 

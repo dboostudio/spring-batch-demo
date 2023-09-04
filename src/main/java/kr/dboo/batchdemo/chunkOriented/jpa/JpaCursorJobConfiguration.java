@@ -13,10 +13,9 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.JpaCursorItemReader;
 import org.springframework.batch.item.database.JpaItemWriter;
-import org.springframework.batch.item.database.JpaPagingItemReader;
-import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
+import org.springframework.batch.item.database.builder.JpaCursorItemReaderBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,9 +28,9 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 @Configuration
-public class JpaPagingJobConfiguration {
+public class JpaCursorJobConfiguration {
 
-    public static final String JOB_NAME = "jpaPaging";
+    public static final String JOB_NAME = "jpaCursor";
 
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
@@ -40,7 +39,7 @@ public class JpaPagingJobConfiguration {
     private static final int chunkSize = 10;
 
     @Bean(JOB_NAME + "_job")
-    public Job jpaPagingJob(){
+    public Job jpaCursorJob(){
         return new JobBuilder(JOB_NAME, jobRepository)
                 .start(init())
                 .next(step())
@@ -80,22 +79,12 @@ public class JpaPagingJobConfiguration {
     }
 
     @Bean(JOB_NAME + "_reader")
-    public JpaPagingItemReader<Pay> reader(){
-        return new JpaPagingItemReaderBuilder<Pay>()
+    public JpaCursorItemReader<Pay> reader(){
+        return new JpaCursorItemReaderBuilder<Pay>()
                 .name("jpaPagingItemReader")
                 .entityManagerFactory(entityManagerFactory)
-                .pageSize(chunkSize)
                 .queryString("SELECT p FROM Pay p WHERE amount >= 30000")
                 .build();
-    }
-
-    @Bean(JOB_NAME + "_writer_simple")
-    ItemWriter<Pay> simpleWriter() {
-        return list -> {
-            for (Pay pay: list) {
-                log.info("Current Pay={}", pay);
-            }
-        };
     }
 
     @Bean(JOB_NAME + "_processor")

@@ -51,9 +51,9 @@ public class JdbcCursorJobConfiguration {
                 .build();
     }
 
-    @Bean
+    @Bean(JOB_NAME + "_init")
     public Step init(){
-        return new StepBuilder("initPays", jobRepository)
+        return new StepBuilder(JOB_NAME + "_init", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     payRepository.deleteAll();
 
@@ -72,17 +72,17 @@ public class JdbcCursorJobConfiguration {
     }
 
     @JobScope
-    @Bean
+    @Bean(JOB_NAME + "_step")
     public Step step() {
         return new StepBuilder("jdbcCursorReadStep", jobRepository)
                 .<Pay, Pay>chunk(chunkSize, transactionManager)
-                .reader(jdbcCursorItemReader())
+                .reader(reader())
                 .writer(jdbcBatchItemWriter())
                 .build();
     }
 
-    @Bean
-    public JdbcCursorItemReader<Pay> jdbcCursorItemReader(){
+    @Bean(JOB_NAME + "_reader")
+    public JdbcCursorItemReader<Pay> reader(){
         return new JdbcCursorItemReaderBuilder<Pay>()
                 .sql("select * from pay")
                 .name("payReader")
@@ -95,7 +95,7 @@ public class JdbcCursorJobConfiguration {
                 .build();
     }
 
-    @Bean
+    @Bean(JOB_NAME + "_writer")
     public ItemWriter<Pay> jdbcCursorItemWriter() {
         return list -> {
             log.info("---chunk---");

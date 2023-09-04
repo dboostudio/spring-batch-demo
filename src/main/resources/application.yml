@@ -1,5 +1,5 @@
 
-spring.batch.job.name: ${JOB_NAME:jpaPaging}
+spring.batch.job.name: ${JOB_NAME:jpaCursor}
 
 spring:
   datasource:
@@ -12,7 +12,7 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         show_sql: true
         use_sql_comment: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
