@@ -46,28 +46,7 @@ public class JdbcCursorJobConfiguration {
     @Bean(JOB_NAME + "_job")
     public Job job(){
         return new JobBuilder(JOB_NAME, jobRepository)
-                .start(init())
-                .next(step())
-                .build();
-    }
-
-    @Bean(JOB_NAME + "_init")
-    public Step init(){
-        return new StepBuilder(JOB_NAME + "_init", jobRepository)
-                .tasklet((contribution, chunkContext) -> {
-                    payRepository.deleteAll();
-
-                    List<Pay> payList = new ArrayList<>();
-
-                    for (int i = 0; i < 100; i++){
-                        payList.add(
-                                new Pay((long) (1000 * i), "trade" + (Integer) i, LocalDateTime.now())
-                        );
-                    }
-
-                    payRepository.saveAll(payList);
-
-                    return RepeatStatus.FINISHED;}, transactionManager)
+                .start(step())
                 .build();
     }
 

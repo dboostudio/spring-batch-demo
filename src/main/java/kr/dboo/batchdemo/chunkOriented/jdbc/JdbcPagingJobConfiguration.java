@@ -1,8 +1,8 @@
 package kr.dboo.batchdemo.chunkOriented.jdbc;
 
+import jakarta.annotation.PostConstruct;
 import kr.dboo.batchdemo.chunkOriented.entity.Pay;
 import kr.dboo.batchdemo.chunkOriented.entity.PayRowMapper;
-import kr.dboo.batchdemo.chunkOriented.repository.PayRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -17,16 +17,13 @@ import org.springframework.batch.item.database.Order;
 import org.springframework.batch.item.database.PagingQueryProvider;
 import org.springframework.batch.item.database.builder.JdbcPagingItemReaderBuilder;
 import org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean;
-import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -37,39 +34,21 @@ public class JdbcPagingJobConfiguration {
     public static final String JOB_NAME = "jdbcPaging";
 
     private final JobRepository jobRepository;
-    private final PlatformTransactionManager transactionManager;
-    private final PayRepository payRepository;
+    private PlatformTransactionManager platformTransactionManager;
     private final DataSource dataSource;
     private final PayRowMapper rowMapper;
 
     private static final int chunkSize = 10;
 
+    @PostConstruct
+    public void postConstruct(){
+        this.platformTransactionManager = new DataSourceTransactionManager(dataSource);
+    }
+
     @Bean(JOB_NAME + "_job")
     public Job job() throws Exception {
         return new JobBuilder(JOB_NAME, jobRepository)
-                .start(init())
-                .next(step())
-                .build();
-    }
-
-    @Bean(JOB_NAME + "_init_step")
-    @JobScope
-    public Step init(){
-        return new StepBuilder(JOB_NAME + "_init", jobRepository)
-                .tasklet((contribution, chunkContext) -> {
-                    payRepository.deleteAll();
-
-                    List<Pay> payList = new ArrayList<>();
-
-                    for (int i = 0; i < 100; i++){
-                        payList.add(
-                                new Pay((long) (1000 * i), "trade" + (Integer) i, LocalDateTime.now())
-                        );
-                    }
-
-                    payRepository.saveAll(payList);
-
-                    return RepeatStatus.FINISHED;}, transactionManager)
+                .start(step())
                 .build();
     }
 
@@ -77,7 +56,7 @@ public class JdbcPagingJobConfiguration {
     @Bean(JOB_NAME + "_step")
     public Step step() throws Exception {
         return new StepBuilder("jdbcPagingStep", jobRepository)
-                .<Pay, Pay>chunk(10, transactionManager)
+                .<Pay, Pay>chunk(10, platformTransactionManager)
                 .reader(reader())
                 .writer(writer())
                 .build();
