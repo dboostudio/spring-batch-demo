@@ -31,23 +31,27 @@ import java.util.List;
 @Configuration
 public class JpaPagingJobConfiguration {
 
+    public static final String JOB_NAME = "jpaPaging";
+
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final EntityManagerFactory entityManagerFactory;
     private final PayRepository payRepository;
     private static final int chunkSize = 10;
 
-    @Bean
+    private boolean throwOnce = false;
+
+    @Bean(JOB_NAME + "_job")
     public Job jpaPagingJob(){
-        return new JobBuilder("jpaPaging", jobRepository)
-                .start(initJpaPay())
-                .next(jpaPagingStep())
+        return new JobBuilder(JOB_NAME, jobRepository)
+                .start(init())
+                .next(step())
                 .build();
     }
 
-    @Bean
+    @Bean(JOB_NAME + "_init_step")
     @JobScope
-    public Step initJpaPay(){
+    public Step init(){
         return new StepBuilder("initPays", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     payRepository.deleteAll();
@@ -66,19 +70,19 @@ public class JpaPagingJobConfiguration {
                 .build();
     }
 
-    @Bean
+    @Bean(JOB_NAME + "_paging_step")
     @JobScope
-    public Step jpaPagingStep(){
+    public Step step(){
         return new StepBuilder("jpaPagingStep", jobRepository)
                 .<Pay, Pay2>chunk(chunkSize, transactionManager)
-                .reader(jpaPagingItemReader())
-                .processor(jpaItemProcessor())
-                .writer(jpaItemWriter())
+                .reader(reader())
+                .processor(processor())
+                .writer(writer())
                 .build();
     }
 
-    @Bean
-    public JpaPagingItemReader<Pay> jpaPagingItemReader(){
+    @Bean(JOB_NAME + "_reader")
+    public JpaPagingItemReader<Pay> reader(){
         return new JpaPagingItemReaderBuilder<Pay>()
                 .name("jpaPagingItemReader")
                 .entityManagerFactory(entityManagerFactory)
@@ -87,8 +91,8 @@ public class JpaPagingJobConfiguration {
                 .build();
     }
 
-    @Bean
-    ItemWriter<Pay> jpaPagingItemWriter() {
+    @Bean(JOB_NAME + "_writer_simple")
+    ItemWriter<Pay> simpleWriter() {
         return list -> {
             for (Pay pay: list) {
                 log.info("Current Pay={}", pay);
@@ -96,13 +100,14 @@ public class JpaPagingJobConfiguration {
         };
     }
 
-    @Bean
-    public ItemProcessor<Pay, Pay2> jpaItemProcessor() {
+    @Bean(JOB_NAME + "_processor")
+    public ItemProcessor<Pay, Pay2> processor() {
+
         return pay -> new Pay2(pay.getAmount(), pay.getTxName(), pay.getTxDateTime());
     }
 
-    @Bean
-    public JpaItemWriter<Pay2> jpaItemWriter() {
+    @Bean (JOB_NAME + "_writer_jpa")
+    public JpaItemWriter<Pay2> writer() {
         JpaItemWriter<Pay2> jpaItemWriter = new JpaItemWriter<>();
         jpaItemWriter.setEntityManagerFactory(entityManagerFactory);
         return jpaItemWriter;

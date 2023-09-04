@@ -30,7 +30,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Configuration
 public class QuerydslSupplierJobConfiguration {
-    public static final String JOB_NAME = "querydslSupplierPagingItemReaderJob";
+    public static final String JOB_NAME = "querydslJob";
 
     private final QuerydslSupplierRepository querydslSupplierRepository;
 

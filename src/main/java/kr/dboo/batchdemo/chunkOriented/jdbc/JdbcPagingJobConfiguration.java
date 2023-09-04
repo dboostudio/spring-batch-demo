@@ -34,6 +34,8 @@ import java.util.Map;
 @Component
 public class JdbcPagingJobConfiguration {
 
+    public static final String JOB_NAME = "jdbcPaging";
+
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final PayRepository payRepository;
@@ -42,17 +44,17 @@ public class JdbcPagingJobConfiguration {
 
     private static final int chunkSize = 10;
 
-    @Bean
-    public Job jdbcPagingJob() throws Exception {
-        return new JobBuilder("jdbcPaging", jobRepository)
-                .start(initPaysPaging())
-                .next(jdbcPagingStep())
+    @Bean(JOB_NAME + "_job")
+    public Job job() throws Exception {
+        return new JobBuilder(JOB_NAME, jobRepository)
+                .start(init())
+                .next(step())
                 .build();
     }
 
-    @Bean
+    @Bean(JOB_NAME + "_init_step")
     @JobScope
-    public Step initPaysPaging(){
+    public Step init(){
         return new StepBuilder("initPays", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     payRepository.deleteAll();
@@ -72,17 +74,17 @@ public class JdbcPagingJobConfiguration {
     }
 
     @JobScope
-    @Bean
-    public Step jdbcPagingStep() throws Exception {
+    @Bean(JOB_NAME + "_step")
+    public Step step() throws Exception {
         return new StepBuilder("jdbcPagingStep", jobRepository)
                 .<Pay, Pay>chunk(10, transactionManager)
-                .reader(jdbcPagingItemReader())
-                .writer(jdbcPagingItemWriter())
+                .reader(reader())
+                .writer(writer())
                 .build();
     }
 
-    @Bean
-    public JdbcPagingItemReader<Pay> jdbcPagingItemReader() throws Exception {
+    @Bean(JOB_NAME + "_reader")
+    public JdbcPagingItemReader<Pay> reader() throws Exception {
         Map<String, Object> parameterValues = new HashMap<>();
         parameterValues.put("amount", 2000);
 
@@ -98,8 +100,8 @@ public class JdbcPagingJobConfiguration {
                 .build();
     }
 
-    @Bean
-    public ItemWriter<Pay> jdbcPagingItemWriter() {
+    @Bean(JOB_NAME + "_writer")
+    public ItemWriter<Pay> writer() {
         return list -> {
             log.info("---chunk---");
             for (Pay pay: list) {

@@ -1,7 +1,6 @@
 package kr.dboo.batchdemo.chunkOriented.jdbc;
 
 import kr.dboo.batchdemo.chunkOriented.entity.Pay;
-import kr.dboo.batchdemo.chunkOriented.entity.Pay2;
 import kr.dboo.batchdemo.chunkOriented.entity.PayRowMapper;
 import kr.dboo.batchdemo.chunkOriented.repository.PayRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +32,8 @@ import java.util.List;
 @Component
 public class JdbcCursorJobConfiguration {
 
+    public static final String JOB_NAME = "jdbcCursor";
+
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final PayRepository payRepository;
@@ -42,16 +43,16 @@ public class JdbcCursorJobConfiguration {
     private static final int chunkSize = 10;
 
 
-    @Bean
-    public Job jdbcCursorJob(){
-        return new JobBuilder("jdbcCursor", jobRepository)
-                .start(initPaysCursor())
-                .next(jdbcCursorStep())
+    @Bean(JOB_NAME + "_job")
+    public Job job(){
+        return new JobBuilder(JOB_NAME, jobRepository)
+                .start(init())
+                .next(step())
                 .build();
     }
 
     @Bean
-    public Step initPaysCursor(){
+    public Step init(){
         return new StepBuilder("initPays", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     payRepository.deleteAll();
@@ -72,7 +73,7 @@ public class JdbcCursorJobConfiguration {
 
     @JobScope
     @Bean
-    public Step jdbcCursorStep() {
+    public Step step() {
         return new StepBuilder("jdbcCursorReadStep", jobRepository)
                 .<Pay, Pay>chunk(chunkSize, transactionManager)
                 .reader(jdbcCursorItemReader())
@@ -88,7 +89,6 @@ public class JdbcCursorJobConfiguration {
                 .fetchSize(chunkSize)
 //                .rowMapper(rowMapper)
                 .rowMapper(new BeanPropertyRowMapper<>(Pay.class))
-//                .beanRowMapper(new BeanPropertyRowMapper<>(Pay.class).getMappedClass())
 //                .beanRowMapper(Pay.class)
                 // beanRowMapper는 매핑할 클래스의 setter를 사용하므로, setter를 만들고 싶지 않으면 직접 rowMapper에 생성자로 매핑해준다.
                 .dataSource(dataSource)

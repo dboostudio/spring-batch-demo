@@ -1,5 +1,5 @@
 
-spring.batch.job.name: ${JOB_NAME:querydslSupplierPagingItemReaderJob}
+spring.batch.job.name: ${JOB_NAME:jpaPaging}
 
 spring:
   datasource:
