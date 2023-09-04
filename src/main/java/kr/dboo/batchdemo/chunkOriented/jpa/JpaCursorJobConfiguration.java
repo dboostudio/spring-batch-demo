@@ -46,10 +46,10 @@ public class JpaCursorJobConfiguration {
                 .build();
     }
 
-    @Bean(JOB_NAME + "_init_step")
+    @Bean(JOB_NAME + "_init")
     @JobScope
     public Step init(){
-        return new StepBuilder("initPays", jobRepository)
+        return new StepBuilder(JOB_NAME+"_init", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     payRepository.deleteAll();
 

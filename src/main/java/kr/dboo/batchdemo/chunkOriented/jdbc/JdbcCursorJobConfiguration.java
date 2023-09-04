@@ -19,6 +19,7 @@ import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuild
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -36,9 +37,9 @@ public class JdbcCursorJobConfiguration {
 
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
-    private final PayRepository payRepository;
     private final DataSource dataSource;
     private final PayRowMapper rowMapper;
+    private final PayRepository payRepository;
 
     private static final int chunkSize = 10;
 
@@ -46,7 +47,29 @@ public class JdbcCursorJobConfiguration {
     @Bean(JOB_NAME + "_job")
     public Job job(){
         return new JobBuilder(JOB_NAME, jobRepository)
+//                .start(init())
                 .start(step())
+                .build();
+    }
+
+    @Bean(JOB_NAME + "_init")
+    @JobScope
+    public Step init(){
+        return new StepBuilder(JOB_NAME + "_init", jobRepository)
+                .tasklet((contribution, chunkContext) -> {
+                    payRepository.deleteAll();
+
+                    List<Pay> payList = new ArrayList<>();
+
+                    for (int i = 0; i < 100; i++){
+                        payList.add(
+                                new Pay((long) (1000 * i), "trade" + (Integer) i, LocalDateTime.now())
+                        );
+                    }
+
+                    payRepository.saveAll(payList);
+
+                    return RepeatStatus.FINISHED; }, transactionManager)
                 .build();
     }
 
@@ -56,7 +79,8 @@ public class JdbcCursorJobConfiguration {
         return new StepBuilder("jdbcCursorReadStep", jobRepository)
                 .<Pay, Pay>chunk(chunkSize, transactionManager)
                 .reader(reader())
-                .writer(jdbcBatchItemWriter())
+//                .writer(printer())
+                .writer(writer())
                 .build();
     }
 
@@ -74,8 +98,8 @@ public class JdbcCursorJobConfiguration {
                 .build();
     }
 
-    @Bean(JOB_NAME + "_writer")
-    public ItemWriter<Pay> jdbcCursorItemWriter() {
+    @Bean(JOB_NAME + "_printer")
+    public ItemWriter<Pay> printer() {
         return list -> {
             log.info("---chunk---");
             for (Pay pay: list) {
@@ -84,12 +108,14 @@ public class JdbcCursorJobConfiguration {
         };
     }
 
-    @Bean
-    public JdbcBatchItemWriter<Pay> jdbcBatchItemWriter() {
-        return new JdbcBatchItemWriterBuilder<Pay>()
+    @Bean(JOB_NAME + "_writer")
+    public JdbcBatchItemWriter<Pay> writer() {
+        JdbcBatchItemWriter<Pay> build = new JdbcBatchItemWriterBuilder<Pay>()
                 .dataSource(dataSource)
                 .sql("insert into pay2(amount, tx_name, tx_date_time) values (:amount, :txName, :txDateTime)")
                 .beanMapped()
                 .build();
+        build.afterPropertiesSet();
+        return build;
     }
 }

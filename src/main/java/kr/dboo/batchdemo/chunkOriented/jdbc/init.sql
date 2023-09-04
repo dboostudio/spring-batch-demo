@@ -1,4 +1,5 @@
 create table pay (id serial not null, amount bigint, tx_date_time timestamp(6), tx_name varchar(255), primary key (id));
+create table pay2 (id serial not null, amount bigint, tx_date_time timestamp(6), tx_name varchar(255), primary key (id));
 
 insert into pay (amount, tx_name, tx_date_time) VALUES (0000, 'trade0', '2018-09-10 00:00:00');
 insert into pay (amount, tx_name, tx_date_time) VALUES (1000, 'trade1', '2018-09-10 00:00:00');
