@@ -30,7 +30,7 @@
 하나의 tasklet은 reader + processor + writer 를 포함한 단계이다.
 
 Job = Steps  
-Step = Tasklets  
+Step = Tasklet 
 tasklet = reader + processor + writer
 
 ### ItemReader
@@ -53,8 +53,19 @@ tasklet = reader + processor + writer
 - ItemWriter는 Reader와 다르게 chunk단위로 묶인 Item List를 다룬다.
 - query를 chunksize만큼 쌓아서 한번에 update한다.
 
+- 데이터베이스 관련 구현체
+  - JdbcBatchItemWriter
+  - HibernateItemWriter
+  - JpaItemWriter
+
 ### ItemProcessor
 
 - 필수요소가 아님
 - Reader에서 읽은 Item을 Write하기전에 비즈니스 로직 처리를 하기위한 용도로 사용됨
 - 특정 조건에서 Writer에게 null을 리턴하면, 필터의 역할을 할 수 있다.
+
+
+# Reference
+
+- https://github.com/jojoldu/spring-batch-in-action : 조졸두님의 batch 예제 소스코드
+- https://github.com/spring-projects/spring-batch : 스프링 공식 batch sample 리포지토리
