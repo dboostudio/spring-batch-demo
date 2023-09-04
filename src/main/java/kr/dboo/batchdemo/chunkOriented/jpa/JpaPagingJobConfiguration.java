@@ -39,8 +39,6 @@ public class JpaPagingJobConfiguration {
     private final PayRepository payRepository;
     private static final int chunkSize = 10;
 
-    private boolean throwOnce = false;
-
     @Bean(JOB_NAME + "_job")
     public Job jpaPagingJob(){
         return new JobBuilder(JOB_NAME, jobRepository)
@@ -102,7 +100,6 @@ public class JpaPagingJobConfiguration {
 
     @Bean(JOB_NAME + "_processor")
     public ItemProcessor<Pay, Pay2> processor() {
-
         return pay -> new Pay2(pay.getAmount(), pay.getTxName(), pay.getTxDateTime());
     }
 
