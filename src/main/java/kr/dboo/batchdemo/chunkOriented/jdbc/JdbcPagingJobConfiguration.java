@@ -1,7 +1,6 @@
 package kr.dboo.batchdemo.chunkOriented.jdbc;
 
 import kr.dboo.batchdemo.chunkOriented.entity.Pay;
-import kr.dboo.batchdemo.chunkOriented.entity.PayRowMapper;
 import kr.dboo.batchdemo.chunkOriented.repository.PayRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +18,6 @@ import org.springframework.batch.item.database.builder.JdbcPagingItemReaderBuild
 import org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -87,17 +85,17 @@ public class JdbcPagingJobConfiguration {
         Map<String, Object> parameterValues = new HashMap<>();
         parameterValues.put("amount", 50000);
 
-        JdbcPagingItemReader<Pay> payPagingReader = new JdbcPagingItemReaderBuilder<Pay>()
+        JdbcPagingItemReader<Pay> reader = new JdbcPagingItemReaderBuilder<Pay>()
                 .pageSize(chunkSize)
                 .fetchSize(chunkSize)
                 .dataSource(dataSource)
                 .parameterValues(parameterValues)
-                .queryProvider(createQueryProvider())
-                .name("payPagingReader")
+                .queryProvider(queryProvider())
+                .name("reader")
                 .beanRowMapper(Pay.class)
                 .build();
-        payPagingReader.afterPropertiesSet();
-        return payPagingReader;
+        reader.afterPropertiesSet();
+        return reader;
     }
 
     @Bean(JOB_NAME + "_writer")
@@ -110,7 +108,7 @@ public class JdbcPagingJobConfiguration {
         };
     }
 
-    public PagingQueryProvider createQueryProvider() throws Exception {
+    public PagingQueryProvider queryProvider() throws Exception {
         SqlPagingQueryProviderFactoryBean queryProvider = new SqlPagingQueryProviderFactoryBean();
         queryProvider.setDataSource(dataSource); // Database에 맞는 PagingQueryProvider를 선택하기 위해
         queryProvider.setSelectClause("id, amount, tx_name, tx_date_time");

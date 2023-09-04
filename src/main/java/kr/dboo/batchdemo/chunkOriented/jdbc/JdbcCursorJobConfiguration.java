@@ -110,12 +110,12 @@ public class JdbcCursorJobConfiguration {
 
     @Bean(JOB_NAME + "_writer")
     public JdbcBatchItemWriter<Pay> writer() {
-        JdbcBatchItemWriter<Pay> build = new JdbcBatchItemWriterBuilder<Pay>()
+        JdbcBatchItemWriter<Pay> writer = new JdbcBatchItemWriterBuilder<Pay>()
                 .dataSource(dataSource)
                 .sql("insert into pay2(amount, tx_name, tx_date_time) values (:amount, :txName, :txDateTime)")
                 .beanMapped()
                 .build();
-        build.afterPropertiesSet();
-        return build;
+        writer.afterPropertiesSet();
+        return writer;
     }
 }
